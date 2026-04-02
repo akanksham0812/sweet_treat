@@ -19,7 +19,7 @@
   --text:#3a3a3a;
   --text-mid:#9a8090;
   --text-light:#b8a8a0;
-  --canvas-bg:#f0ebe3;
+  --canvas-bg:#1a1714;
   --selected-ring:#d4a5a5;
   --thumb-bg:#fff;
   --btn-bg:#fff;
@@ -53,29 +53,7 @@ body{
 .topbar-actions{display:flex;gap:8px;}
 .mob-subtitle{display:none;font-size:0.72rem;color:var(--text-light);font-family:'Inter',sans-serif;font-weight:400;}
 
-/* Mobile floating edit bar */
-.mob-edit-bar{
-  display:none;
-  position:fixed;bottom:70px;left:50%;transform:translateX(-50%);
-  background:var(--panel-bg);border:1px solid var(--border);
-  border-radius:40px;padding:8px 16px;
-  box-shadow:0 4px 20px rgba(0,0,0,0.15);
-  z-index:45;
-  flex-direction:row;align-items:center;gap:10px;
-  white-space:nowrap;
-}
-.mob-edit-bar.visible{display:flex;}
-.mob-edit-slider-wrap{display:flex;align-items:center;gap:6px;}
-.mob-edit-slider-wrap label{font-size:0.65rem;color:var(--text-mid);font-weight:600;}
-.mob-edit-slider-wrap input[type=range]{width:80px;accent-color:var(--accent);}
-.mob-edit-sep{width:1px;height:20px;background:var(--border);}
-.mob-edit-btn{
-  width:30px;height:30px;border-radius:50%;
-  border:none;background:transparent;cursor:pointer;
-  font-size:1rem;display:flex;align-items:center;justify-content:center;
-  color:var(--text-mid);
-}
-.mob-edit-btn.red{color:var(--danger);}
+
 .tb-btn{
   padding:5px 13px;border-radius:6px;border:1px solid var(--border);
   background:var(--btn-bg);color:var(--text-mid);
@@ -1501,22 +1479,6 @@ body{
   </div>
 </div>
 
-<!-- MOBILE FLOATING EDIT BAR (shown when cake selected) -->
-<div class="mob-edit-bar" id="mobEditBar">
-  <div class="mob-edit-slider-wrap">
-    <label>Size</label>
-    <input type="range" id="mobFastSize" min="30" max="220" value="80"
-      oninput="updateSize(this.value);document.getElementById('sizeSlider').value=this.value"/>
-  </div>
-  <div class="mob-edit-sep"></div>
-  <div class="mob-edit-slider-wrap">
-    <label>Rotate</label>
-    <input type="range" id="mobFastRot" min="-180" max="180" value="0"
-      oninput="updateRot(this.value);document.getElementById('rotSlider').value=this.value"/>
-  </div>
-  <div class="mob-edit-sep"></div>
-  <button class="mob-edit-btn red" onclick="deleteSelected()">🗑</button>
-</div>
 
 <!-- MOBILE BOTTOM NAV -->
 <nav class="mobile-nav" id="mobileNav">
@@ -1540,7 +1502,7 @@ body{
 
 <!-- MOBILE CAKES SHEET -->
 <div class="mobile-sheet" id="mobileSheet">
-  <div class="sheet-handle"></div>
+
   <div class="search-wrap" style="margin:0 12px 8px;">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
     <input type="text" placeholder="Search cakes…" oninput="filterFlowersMob(this.value)" />
@@ -1557,7 +1519,7 @@ body{
 
 <!-- MOBILE PROPS SHEET -->
 <div class="mobile-sheet" id="mobilePropsSheet">
-  <div class="sheet-handle"></div>
+
   <div style="padding:0 16px 20px;">
     <div id="mobPropsHint" style="text-align:center;color:var(--text-light);font-size:0.8rem;padding:20px 0;">Select a cake to edit</div>
     <div id="mobPropsContent" style="display:none;">
@@ -1592,7 +1554,7 @@ body{
 
 <!-- MOBILE BACKGROUND SHEET -->
 <div class="mobile-sheet" id="mobileBgSheet">
-  <div class="sheet-handle"></div>
+
   <div style="padding:8px 16px 24px;">
     <div class="prop-label" style="margin-bottom:12px;">Background Color</div>
     <div style="display:flex;flex-wrap:wrap;gap:10px;">
@@ -1805,6 +1767,9 @@ function buildGrid(flowers){
   });
 }
 buildGrid(FLOWERS);
+
+// Set default background
+setBg('bg0','#1a1714');
 
 // No auto-open on mobile
 
@@ -2095,12 +2060,6 @@ function selectFlower(fid){
   updateFlipBtns(s);
   updateLayerList();
 
-  // Show mobile floating edit bar
-  if(window.innerWidth <= 768){
-    document.getElementById('mobFastSize').value = s.size;
-    document.getElementById('mobFastRot').value  = s.rot;
-    document.getElementById('mobEditBar').classList.add('visible');
-  }
 }
 
 function deselectAll(e){
@@ -2113,7 +2072,6 @@ function deselectAll(e){
     selectedId = null;
     document.getElementById('propsHint').classList.remove('hide');
     document.getElementById('propsContent').classList.remove('show');
-    document.getElementById('mobEditBar').classList.remove('visible');
     updateLayerList();
   }
 }
@@ -2428,7 +2386,7 @@ function buildCardCanvas(cakeCanvas, to, from, msg){
   ctx.font = Math.round(16 * scale) + 'px Arial, sans-serif';
   ctx.fillStyle = '#5a4850';
   ctx.textBaseline = 'bottom';
-  ctx.fillText('\u2014 Sweet Treat Studio', comp.width / 2, cakeCanvas.height + stripH - 12 * scale);
+  ctx.fillText('\u2014 Sweet Treat', comp.width / 2, cakeCanvas.height + stripH - 12 * scale);
 
   return comp;
 }
