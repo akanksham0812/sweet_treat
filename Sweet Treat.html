@@ -606,12 +606,13 @@ body{
 }
 .mob-tab{
   flex:1;display:flex;flex-direction:column;
-  align-items:center;justify-content:center;gap:3px;
-  cursor:pointer;color:var(--text-light);
-  font-size:0.58rem;font-weight:500;letter-spacing:0.06em;
+  align-items:center;justify-content:center;gap:4px;
+  cursor:pointer;color:var(--text-mid);
+  font-size:0.6rem;font-weight:600;letter-spacing:0.04em;
   text-transform:uppercase;border:none;background:transparent;
   font-family:'Inter',sans-serif;
   transition:color 0.15s;
+  padding:6px 0;
 }
 .mob-tab svg{width:20px;height:20px;}
 .mob-tab.active{color:var(--accent);}
@@ -1481,13 +1482,17 @@ body{
 
 <!-- MOBILE BOTTOM NAV -->
 <nav class="mobile-nav" id="mobileNav">
-  <button class="mob-tab active" id="mobTabCakes" onclick="showMobTab('cakes')">
+  <button class="mob-tab" id="mobTabCakes" onclick="showMobTab('cakes')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 11h18M3 11c0-4 4-7 9-7s9 3 9 7M3 11v2a9 9 0 0 0 18 0v-2"/><path d="M8 11v2M12 11v2M16 11v2"/></svg>
     Cakes
   </button>
   <button class="mob-tab" id="mobTabProps" onclick="showMobTab('props')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
     Edit
+  </button>
+  <button class="mob-tab" id="mobTabBg" onclick="showMobTab('bg')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>
+    Background
   </button>
   <button class="mob-tab" id="mobTabSend" onclick="openSendModal()">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 2 11 13M22 2 15 22l-4-9-9-4 20-7z"/></svg>
@@ -1543,6 +1548,26 @@ body{
         <button class="layer-btn" onclick="sendBack()">▼ Back</button>
         <button class="delete-btn" onclick="deleteSelected()">🗑 Delete</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- MOBILE BACKGROUND SHEET -->
+<div class="mobile-sheet" id="mobileBgSheet">
+  <div class="sheet-handle"></div>
+  <div style="padding:8px 16px 24px;">
+    <div class="prop-label" style="margin-bottom:12px;">Background Color</div>
+    <div style="display:flex;flex-wrap:wrap;gap:10px;">
+      <div class="bg-thumb active" id="mbg0" onclick="setBg('bg0','#1a1714');document.querySelectorAll('#mobileBgSheet .bg-thumb').forEach(t=>t.classList.remove('active'));this.classList.add('active')" style="width:44px;height:44px;border-radius:8px;cursor:pointer;border:2px solid transparent;"><div class="bg-swatch" style="background:#1a1714;border-radius:6px;width:100%;height:100%;"></div></div>
+      <div class="bg-thumb" id="mbg1" onclick="setBg('bg1','#000000');document.querySelectorAll('#mobileBgSheet .bg-thumb').forEach(t=>t.classList.remove('active'));this.classList.add('active')" style="width:44px;height:44px;border-radius:8px;cursor:pointer;border:2px solid transparent;"><div class="bg-swatch" style="background:#000000;border-radius:6px;width:100%;height:100%;"></div></div>
+      <div class="bg-thumb" id="mbg2" onclick="setBg('bg2','#0d1a10');document.querySelectorAll('#mobileBgSheet .bg-thumb').forEach(t=>t.classList.remove('active'));this.classList.add('active')" style="width:44px;height:44px;border-radius:8px;cursor:pointer;border:2px solid transparent;"><div class="bg-swatch" style="background:#0d1a10;border-radius:6px;width:100%;height:100%;"></div></div>
+      <div class="bg-thumb" id="mbg3" onclick="setBg('bg3','#0d1020');document.querySelectorAll('#mobileBgSheet .bg-thumb').forEach(t=>t.classList.remove('active'));this.classList.add('active')" style="width:44px;height:44px;border-radius:8px;cursor:pointer;border:2px solid transparent;"><div class="bg-swatch" style="background:#0d1020;border-radius:6px;width:100%;height:100%;"></div></div>
+      <div class="bg-thumb" id="mbg4" onclick="setBg('bg4','#1a0d14');document.querySelectorAll('#mobileBgSheet .bg-thumb').forEach(t=>t.classList.remove('active'));this.classList.add('active')" style="width:44px;height:44px;border-radius:8px;cursor:pointer;border:2px solid transparent;"><div class="bg-swatch" style="background:#1a0d14;border-radius:6px;width:100%;height:100%;"></div></div>
+      <div class="bg-thumb" id="mbg5" onclick="setBg('bg5','#1a1a1a');document.querySelectorAll('#mobileBgSheet .bg-thumb').forEach(t=>t.classList.remove('active'));this.classList.add('active')" style="width:44px;height:44px;border-radius:8px;cursor:pointer;border:2px solid transparent;"><div class="bg-swatch" style="background:#1a1a1a;border-radius:6px;width:100%;height:100%;"></div></div>
+      <div class="bg-thumb" onclick="setBg('','#faf8f5');document.querySelectorAll('#mobileBgSheet .bg-thumb').forEach(t=>t.classList.remove('active'));this.classList.add('active')" style="width:44px;height:44px;border-radius:8px;cursor:pointer;border:2px solid transparent;"><div class="bg-swatch" style="background:#faf8f5;border-radius:6px;width:100%;height:100%;border:1px solid #e0d8d0;"></div></div>
+      <div class="bg-thumb" onclick="setBg('','#f5e6d3');document.querySelectorAll('#mobileBgSheet .bg-thumb').forEach(t=>t.classList.remove('active'));this.classList.add('active')" style="width:44px;height:44px;border-radius:8px;cursor:pointer;border:2px solid transparent;"><div class="bg-swatch" style="background:#f5e6d3;border-radius:6px;width:100%;height:100%;"></div></div>
+      <div class="bg-thumb" onclick="setBg('','#2d1b2e');document.querySelectorAll('#mobileBgSheet .bg-thumb').forEach(t=>t.classList.remove('active'));this.classList.add('active')" style="width:44px;height:44px;border-radius:8px;cursor:pointer;border:2px solid transparent;"><div class="bg-swatch" style="background:#2d1b2e;border-radius:6px;width:100%;height:100%;"></div></div>
+      <div class="bg-thumb" onclick="setBg('','#1a2a1a');document.querySelectorAll('#mobileBgSheet .bg-thumb').forEach(t=>t.classList.remove('active'));this.classList.add('active')" style="width:44px;height:44px;border-radius:8px;cursor:pointer;border:2px solid transparent;"><div class="bg-swatch" style="background:#1a2a1a;border-radius:6px;width:100%;height:100%;"></div></div>
     </div>
   </div>
 </div>
@@ -1609,28 +1634,26 @@ body{
 // ── MOBILE NAV ──
 let activeMobSheet = null;
 function showMobTab(tab){
-  const cakesSheet = document.getElementById('mobileSheet');
-  const propsSheet = document.getElementById('mobilePropsSheet');
-  const allSheets  = [cakesSheet, propsSheet];
-  const tabCakes   = document.getElementById('mobTabCakes');
-  const tabProps   = document.getElementById('mobTabProps');
+  const allSheets = document.querySelectorAll('.mobile-sheet');
+  const sheetMap  = { cakes:'mobileSheet', props:'mobilePropsSheet', bg:'mobileBgSheet' };
+  const tabMap    = { cakes:'mobTabCakes', props:'mobTabProps', bg:'mobTabBg' };
 
   document.querySelectorAll('.mob-tab').forEach(t => t.classList.remove('active'));
 
-  if(tab === 'cakes'){
-    tabCakes.classList.add('active');
-    if(activeMobSheet === 'cakes'){ allSheets.forEach(s=>s.classList.remove('open')); activeMobSheet=null; return; }
+  if(activeMobSheet === tab){
     allSheets.forEach(s=>s.classList.remove('open'));
-    cakesSheet.classList.add('open');
-    activeMobSheet = 'cakes';
-  } else if(tab === 'props'){
-    tabProps.classList.add('active');
-    if(activeMobSheet === 'props'){ allSheets.forEach(s=>s.classList.remove('open')); activeMobSheet=null; return; }
-    allSheets.forEach(s=>s.classList.remove('open'));
-    propsSheet.classList.add('open');
-    activeMobSheet = 'props';
-    syncMobProps();
+    activeMobSheet = null;
+    return;
   }
+
+  allSheets.forEach(s=>s.classList.remove('open'));
+  const sheet = document.getElementById(sheetMap[tab]);
+  if(sheet) sheet.classList.add('open');
+  const tabEl = document.getElementById(tabMap[tab]);
+  if(tabEl) tabEl.classList.add('active');
+  activeMobSheet = tab;
+
+  if(tab === 'props') syncMobProps();
 }
 
 function syncMobProps(){
@@ -1745,11 +1768,7 @@ function buildGrid(flowers){
 }
 buildGrid(FLOWERS);
 
-// Auto-open cakes sheet on mobile
-if(window.innerWidth <= 768){
-  document.getElementById('mobileSheet').classList.add('open');
-  activeMobSheet = 'cakes';
-}
+// No auto-open on mobile
 
 function filterFlowers(){
   const q = document.getElementById('searchInput').value.toLowerCase();
@@ -1879,20 +1898,22 @@ function applyTransform(el, s){
 function makeDraggable(el, state){
   let ox, oy, dragging = false;
 
-  el.addEventListener('mousedown', e => {
-    if (e.button !== 0) return;
+  el.addEventListener('pointerdown', e => {
     if (e.target.classList.contains('resize-handle') ||
         e.target.classList.contains('rotate-handle') ||
         e.target.closest('.flower-toolbar')) return;
     e.stopPropagation(); e.preventDefault();
+    el.setPointerCapture(e.pointerId);
     dragging = true;
     ox = e.clientX - state.x;
     oy = e.clientY - state.y;
     el.style.cursor = 'grabbing';
+    selectFlower(fid);
   });
 
-  document.addEventListener('mousemove', e => {
+  el.addEventListener('pointermove', e => {
     if (!dragging) return;
+    e.preventDefault();
     const canvas = document.getElementById('canvasArea');
     const rect = canvas.getBoundingClientRect();
     state.x = Math.max(-state.size + 10, Math.min(rect.width - 10, e.clientX - ox));
@@ -1901,36 +1922,9 @@ function makeDraggable(el, state){
     el.style.top  = state.y + 'px';
   });
 
-  document.addEventListener('mouseup', () => {
-    if (dragging){ dragging = false; el.style.cursor = 'grab'; }
+  el.addEventListener('pointerup', () => {
+    dragging = false; el.style.cursor = 'grab';
   });
-
-  // Touch drag
-  el.addEventListener('touchstart', e => {
-    if (e.target.classList.contains('resize-handle') ||
-        e.target.classList.contains('rotate-handle') ||
-        e.target.closest('.flower-toolbar')) return;
-    e.stopPropagation();
-    selectFlower(fid);
-    const t = e.touches[0];
-    dragging = true;
-    ox = t.clientX - state.x;
-    oy = t.clientY - state.y;
-  }, {passive:true});
-
-  el.addEventListener('touchmove', e => {
-    if (!dragging) return;
-    e.preventDefault();
-    const t = e.touches[0];
-    const canvas = document.getElementById('canvasArea');
-    const rect = canvas.getBoundingClientRect();
-    state.x = Math.max(-state.size + 10, Math.min(rect.width - 10, t.clientX - ox));
-    state.y = Math.max(-state.size + 10, Math.min(rect.height - 10, t.clientY - oy));
-    el.style.left = state.x + 'px';
-    el.style.top  = state.y + 'px';
-  }, {passive:false});
-
-  el.addEventListener('touchend', () => { dragging = false; });
 }
 
 // ── RESIZE ──
@@ -1959,23 +1953,27 @@ function makeResizable(el, state){
 
   document.addEventListener('mouseup', () => { resizing = false; });
 
-  // Touch resize
-  handle.addEventListener('touchstart', e => {
+  handle.addEventListener('pointerdown', e => {
     e.stopPropagation(); e.preventDefault();
+    handle.setPointerCapture(e.pointerId);
     resizing = true;
-    startX = e.touches[0].clientX;
+    startX = e.clientX;
     startSize = state.size;
-  }, {passive:false});
+  });
 
-  document.addEventListener('touchmove', e => {
+  handle.addEventListener('pointermove', e => {
     if (!resizing) return;
-    const dx = e.touches[0].clientX - startX;
+    const dx = e.clientX - startX;
     state.size = Math.max(30, Math.min(220, startSize + dx));
     el.style.width = state.size + 'px';
     el.style.height = state.size + 'px';
-  }, {passive:true});
+    if (selectedId === state.fid){
+      document.getElementById('sizeSlider').value = state.size;
+      document.getElementById('sizeVal').textContent = Math.round(state.size);
+    }
+  });
 
-  document.addEventListener('touchend', () => { resizing = false; });
+  handle.addEventListener('pointerup', () => { resizing = false; });
 }
 
 // ── ROTATE ──
@@ -2025,15 +2023,6 @@ function selectFlower(fid){
   updateFlipBtns(s);
   updateLayerList();
 
-  // On mobile, auto-open the edit sheet
-  if(window.innerWidth <= 768){
-    const cakesSheet = document.getElementById('mobileSheet');
-    const propsSheet = document.getElementById('mobilePropsSheet');
-    cakesSheet.classList.remove('open');
-    propsSheet.classList.add('open');
-    activeMobSheet = 'props';
-    syncMobProps();
-  }
 }
 
 function deselectAll(e){
