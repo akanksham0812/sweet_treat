@@ -601,8 +601,8 @@ body{
 .mobile-nav{
   display:none;
   position:fixed;bottom:0;left:0;right:0;
-  height:calc(60px + env(safe-area-inset-bottom, 0px));
-  padding-bottom:env(safe-area-inset-bottom, 0px);
+  height:calc(60px + env(safe-area-inset-bottom, 34px));
+  padding-bottom:env(safe-area-inset-bottom, 34px);
   background:var(--panel-bg);
   border-top:1px solid var(--border);
   z-index:50;
@@ -624,7 +624,7 @@ body{
 /* ── MOBILE BOTTOM SHEET ── */
 .mobile-sheet{
   display:none;
-  position:fixed;bottom:calc(60px + env(safe-area-inset-bottom, 0px));left:0;right:0;
+  position:fixed;bottom:calc(60px + env(safe-area-inset-bottom, 34px));left:0;right:0;
   background:var(--panel-bg);
   border-top:1.5px solid var(--border);
   border-radius:16px 16px 0 0;
@@ -645,7 +645,7 @@ body{
 .mobile-sheet .search-wrap{margin:0 12px 8px;}
 
 @media(max-width:768px){
-  body{padding-bottom:calc(60px + env(safe-area-inset-bottom, 0px));overflow:hidden;}
+  body{padding-bottom:calc(60px + env(safe-area-inset-bottom, 34px));overflow:hidden;}
 
   /* Hide desktop panels */
   .left-panel,.right-panel,.canvas-toolbar,.bg-bar{display:none;}
@@ -679,7 +679,7 @@ body{
   .placed-flower .rotate-handle{width:26px;height:26px;top:-30px;}
   .placed-flower .flower-toolbar{top:-46px;}
   .ft-btn{width:32px;height:32px;}
-  .toast{bottom:74px;}
+  .toast{bottom:calc(60px + env(safe-area-inset-bottom, 34px) + 16px);}
   .modal{width:95vw;max-height:92vh;overflow-y:auto;}
 }
 
@@ -2326,24 +2326,26 @@ async function downloadPNG(){
   const to   = document.getElementById('modalTo').value.trim();
   const from = document.getElementById('modalFrom').value.trim();
   const msg  = document.getElementById('modalMsg').value.trim();
+  // Open window NOW (user gesture is active) before any await
+  const win  = window.open('', '_blank');
   showToast('Preparing image...');
   try {
     const canvas = await captureCanvas();
     const card   = buildCardCanvas(canvas, to, from, msg);
-    card.toBlob(blob => {
-      const file = new File([blob], 'sweet-treat.jpg', {type:'image/jpeg'});
-      if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
-        navigator.share({files:[file], title:'Sweet Treat'}).catch(()=>{});
-      } else {
-        const url = URL.createObjectURL(blob);
-        const a   = document.createElement('a');
-        a.href = url; a.download = 'sweet-treat.jpg';
-        document.body.appendChild(a); a.click(); document.body.removeChild(a);
-        setTimeout(()=> URL.revokeObjectURL(url), 2000);
-        showToast('Downloaded!');
-      }
-    }, 'image/jpeg', 0.92);
-  } catch(err){ console.error(err); showToast('Error: ' + err.message); }
+    const url    = card.toDataURL('image/jpeg', 0.92);
+    if(win){
+      win.location.href = url;
+      showToast('Hold image to save!');
+    } else {
+      const a = document.createElement('a');
+      a.href = url; a.download = 'sweet-treat.jpg';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      showToast('Downloaded!');
+    }
+  } catch(err){
+    if(win) win.close();
+    console.error(err); showToast('Error: ' + err.message);
+  }
 }
 
 function buildCardCanvas(cakeCanvas, to, from, msg){
@@ -2417,32 +2419,37 @@ async function shareWhatsApp(){
   if(from) waText += 'From: ' + from + '\n';
   if(msg)  waText += '\u201C' + msg + '\u201D\n';
 
+  // Open window NOW before any await so browser allows it
+  const win = window.open('', '_blank');
   showToast('Preparing...');
-
   try {
     const canvas     = await captureCanvas();
     const cardCanvas = buildCardCanvas(canvas, to, from, msg);
     const blob       = await new Promise(res => cardCanvas.toBlob(res, 'image/jpeg', 0.92));
     const file       = new File([blob], 'sweet-treat.jpg', {type:'image/jpeg'});
 
-    // Mobile: Web Share API opens native share sheet (pick WhatsApp from it)
+    // Try Web Share API with image (iOS + Android native share sheet)
     if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
-      await navigator.share({files:[file], text: waText, title:'Sweet Treat'});
+      if(win) win.close();
+      await navigator.share({files:[file], text:waText, title:'Sweet Treat'});
       showToast('Shared!');
       return;
     }
 
-    // Desktop: upload image to Cloudinary, send URL via WhatsApp web
-    showToast('Uploading image...');
+    // Upload to Cloudinary → redirect the already-open window to WhatsApp
+    showToast('Uploading...');
     const imgUrl = await uploadImage(blob);
-    const waUrl  = 'https://wa.me/?text=' + encodeURIComponent(waText + imgUrl);
-    window.open(waUrl, '_blank');
+    waText += imgUrl;
+    const waUrl = 'https://wa.me/?text=' + encodeURIComponent(waText);
+    if(win) win.location.href = waUrl;
+    else window.open(waUrl, '_blank');
     showToast('Opening WhatsApp...');
 
   } catch(e){
+    if(win) win.close();
     if(e.name === 'AbortError') return;
     console.error(e);
-    // Fallback: at least send the text
+    // At minimum send text
     const waUrl = 'https://wa.me/?text=' + encodeURIComponent(waText);
     window.open(waUrl, '_blank');
   }
