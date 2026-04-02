@@ -2305,56 +2305,85 @@ function updateModalFlowerPreview(){
     wrap.appendChild(img);
   });
 }
-function captureCanvas(){
-  const canvasEl = document.getElementById('canvasArea');
-  const hide = canvasEl.querySelectorAll('.canvas-drop-hint,.flower-toolbar,.handles,.resize-handle,.rotate-handle,.bg-label,.shop-svg-backdrop');
-  hide.forEach(el => el.style.visibility = 'hidden');
-  return html2canvas(canvasEl, {
-    useCORS: true,
-    allowTaint: false,
-    scale: 2,
-    backgroundColor: '#f0ebe3',
-    ignoreElements: el =>
-      el.classList.contains('canvas-drop-hint') ||
-      el.classList.contains('flower-toolbar') ||
-      el.classList.contains('shop-svg-backdrop')
-  }).then(result => {
-    hide.forEach(el => el.style.visibility = '');
-    return result;
-  }).catch(err => {
-    hide.forEach(el => el.style.visibility = '');
-    throw err;
+function loadImg(src){
+  return new Promise((res, rej) => {
+    const img = new Image();
+    img.onload  = () => res(img);
+    img.onerror = () => rej(new Error('Failed to load: ' + src));
+    img.src = src;
   });
 }
 
-function downloadPNG(){
+async function captureCanvas(){
+  const canvasEl = document.getElementById('canvasArea');
+  const W = canvasEl.offsetWidth;
+  const H = canvasEl.offsetHeight;
+  const S = 2; // retina scale
+
+  const off = document.createElement('canvas');
+  off.width  = W * S;
+  off.height = H * S;
+  const ctx = off.getContext('2d');
+  ctx.scale(S, S);
+
+  // 1. Background colour
+  ctx.fillStyle = canvasEl.style.backgroundColor || '#f0ebe3';
+  ctx.fillRect(0, 0, W, H);
+
+  // 2. Plate
+  const plateWrap = document.querySelector('.vase-el');
+  const plateImg  = document.querySelector('.vase-el img');
+  if(plateWrap && plateImg){
+    const pr   = plateWrap.getBoundingClientRect();
+    const cr   = canvasEl.getBoundingClientRect();
+    const px   = pr.left - cr.left;
+    const py   = pr.top  - cr.top;
+    try {
+      const p = await loadImg(plateImg.src);
+      ctx.drawImage(p, px, py, pr.width, pr.height);
+    } catch(e){}
+  }
+
+  // 3. Placed cakes in z-order
+  const sorted = [...placedFlowers].sort((a,b) => a.z - b.z);
+  for(const f of sorted){
+    try {
+      const img = await loadImg(imgSrc(f.imgId));
+      ctx.save();
+      ctx.globalAlpha = f.opac;
+      ctx.translate(f.x + f.size/2, f.y + f.size/2);
+      ctx.rotate(f.rot * Math.PI / 180);
+      ctx.scale(f.flipH ? -1 : 1, f.flipV ? -1 : 1);
+      ctx.drawImage(img, -f.size/2, -f.size/2, f.size, f.size);
+      ctx.restore();
+    } catch(e){}
+  }
+
+  return off;
+}
+
+async function downloadPNG(){
   const to   = document.getElementById('modalTo').value.trim();
   const from = document.getElementById('modalFrom').value.trim();
   const msg  = document.getElementById('modalMsg').value.trim();
   showToast('Preparing image...');
-  captureCanvas().then(canvas => {
-    const card = buildCardCanvas(canvas, to, from, msg);
+  try {
+    const canvas = await captureCanvas();
+    const card   = buildCardCanvas(canvas, to, from, msg);
     card.toBlob(blob => {
-      const file = new File([blob], 'sweet-treat.png', {type:'image/png'});
-      // Use Web Share API on mobile (iOS + Android)
+      const file = new File([blob], 'sweet-treat.jpg', {type:'image/jpeg'});
       if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
-        navigator.share({files:[file], title:'Sweet Treat'})
-          .then(() => showToast('Saved!'))
-          .catch(() => {});
+        navigator.share({files:[file], title:'Sweet Treat'}).catch(()=>{});
       } else {
-        // Desktop: trigger download
         const url = URL.createObjectURL(blob);
         const a   = document.createElement('a');
-        a.href     = url;
-        a.download = 'sweet-treat.png';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        a.href = url; a.download = 'sweet-treat.jpg';
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        setTimeout(()=> URL.revokeObjectURL(url), 2000);
         showToast('Downloaded!');
       }
-    }, 'image/png');
-  }).catch(err => { console.error(err); showToast('Failed: ' + err.message); });
+    }, 'image/jpeg', 0.92);
+  } catch(err){ console.error(err); showToast('Error: ' + err.message); }
 }
 
 function buildCardCanvas(cakeCanvas, to, from, msg){
@@ -2423,40 +2452,39 @@ async function shareWhatsApp(){
   const msg  = document.getElementById('modalMsg').value.trim();
 
   let waText = '';
-  if(to)   waText += 'Hey ' + to + '! ';
+  if(to)   waText += 'Hey ' + to + '! \uD83C\uDF82\n';
   waText += 'A sweet treat just for you!\n';
   if(from) waText += 'From: ' + from + '\n';
-  if(msg)  waText += '\u201C' + msg + '\u201D';
+  if(msg)  waText += '\u201C' + msg + '\u201D\n';
 
   showToast('Preparing...');
 
   try {
-    const canvas    = await captureCanvas();
+    const canvas     = await captureCanvas();
     const cardCanvas = buildCardCanvas(canvas, to, from, msg);
-    const blob      = await new Promise(res => cardCanvas.toBlob(res, 'image/jpeg', 0.9));
-    const file      = new File([blob], 'sweet-treat.jpg', {type:'image/jpeg'});
+    const blob       = await new Promise(res => cardCanvas.toBlob(res, 'image/jpeg', 0.92));
+    const file       = new File([blob], 'sweet-treat.jpg', {type:'image/jpeg'});
 
-    // Try Web Share API with file (works on iOS Safari + Android Chrome)
+    // Mobile: Web Share API opens native share sheet (pick WhatsApp from it)
     if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
       await navigator.share({files:[file], text: waText, title:'Sweet Treat'});
       showToast('Shared!');
       return;
     }
 
-    // Fallback: upload to Cloudinary then open WhatsApp with URL
-    showToast('Uploading...');
+    // Desktop: upload image to Cloudinary, send URL via WhatsApp web
+    showToast('Uploading image...');
     const imgUrl = await uploadImage(blob);
-    const waUrl  = 'https://wa.me/?text=' + encodeURIComponent(waText + '\n' + imgUrl);
+    const waUrl  = 'https://wa.me/?text=' + encodeURIComponent(waText + imgUrl);
     window.open(waUrl, '_blank');
     showToast('Opening WhatsApp...');
 
-  } catch(e) {
-    if(e.name === 'AbortError') return; // user cancelled share sheet
+  } catch(e){
+    if(e.name === 'AbortError') return;
     console.error(e);
-    // Last resort: open WhatsApp with just the text
+    // Fallback: at least send the text
     const waUrl = 'https://wa.me/?text=' + encodeURIComponent(waText);
     window.open(waUrl, '_blank');
-    showToast('Opened WhatsApp (attach image manually)');
   }
 }
 
