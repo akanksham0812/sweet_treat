@@ -2310,20 +2310,22 @@ function updateModalFlowerPreview(){
 }
 function captureCanvas(){
   const canvasEl = document.getElementById('canvasArea');
-  // Hide UI-only elements before capture
-  const hints = canvasEl.querySelectorAll('.canvas-drop-hint, .flower-toolbar, .handles, .resize-handle, .rotate-handle, .bg-label');
-  hints.forEach(el => el.style.visibility = 'hidden');
+  const hide = canvasEl.querySelectorAll('.canvas-drop-hint,.flower-toolbar,.handles,.resize-handle,.rotate-handle,.bg-label,.shop-svg-backdrop');
+  hide.forEach(el => el.style.visibility = 'hidden');
   return html2canvas(canvasEl, {
     useCORS: true,
-    allowTaint: true,
+    allowTaint: false,
     scale: 2,
-    backgroundColor: null,
-    ignoreElements: el => el.classList.contains('canvas-drop-hint') || el.classList.contains('flower-toolbar')
+    backgroundColor: '#f0ebe3',
+    ignoreElements: el =>
+      el.classList.contains('canvas-drop-hint') ||
+      el.classList.contains('flower-toolbar') ||
+      el.classList.contains('shop-svg-backdrop')
   }).then(result => {
-    hints.forEach(el => el.style.visibility = '');
+    hide.forEach(el => el.style.visibility = '');
     return result;
   }).catch(err => {
-    hints.forEach(el => el.style.visibility = '');
+    hide.forEach(el => el.style.visibility = '');
     throw err;
   });
 }
@@ -2332,20 +2334,30 @@ function downloadPNG(){
   const to   = document.getElementById('modalTo').value.trim();
   const from = document.getElementById('modalFrom').value.trim();
   const msg  = document.getElementById('modalMsg').value.trim();
-  showToast('Preparing download...');
+  showToast('Preparing image...');
   captureCanvas().then(canvas => {
-    const card    = buildCardCanvas(canvas, to, from, msg);
-    const dataUrl = card.toDataURL('image/png');
-    const link    = document.createElement('a');
-    link.download = 'sweet-treat.png';
-    link.href     = dataUrl;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    // Mobile fallback: open in new tab so user can long-press to save
-    setTimeout(() => { try{ window.open(dataUrl,'_blank'); }catch(e){} }, 300);
-    showToast('Downloaded! (long-press image to save on mobile)');
-  }).catch(err => { console.error(err); showToast('Download failed — try again'); });
+    const card = buildCardCanvas(canvas, to, from, msg);
+    card.toBlob(blob => {
+      const file = new File([blob], 'sweet-treat.png', {type:'image/png'});
+      // Use Web Share API on mobile (iOS + Android)
+      if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
+        navigator.share({files:[file], title:'Sweet Treat'})
+          .then(() => showToast('Saved!'))
+          .catch(() => {});
+      } else {
+        // Desktop: trigger download
+        const url = URL.createObjectURL(blob);
+        const a   = document.createElement('a');
+        a.href     = url;
+        a.download = 'sweet-treat.png';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        showToast('Downloaded!');
+      }
+    }, 'image/png');
+  }).catch(err => { console.error(err); showToast('Failed: ' + err.message); });
 }
 
 function buildCardCanvas(cakeCanvas, to, from, msg){
@@ -2413,45 +2425,41 @@ async function shareWhatsApp(){
   const from = document.getElementById('modalFrom').value.trim();
   const msg  = document.getElementById('modalMsg').value.trim();
 
-  showToast('Uploading image...');
+  let waText = '';
+  if(to)   waText += 'Hey ' + to + '! ';
+  waText += 'A sweet treat just for you!\n';
+  if(from) waText += 'From: ' + from + '\n';
+  if(msg)  waText += '\u201C' + msg + '\u201D';
+
+  showToast('Preparing...');
 
   try {
-    // 1. Capture canvas
-    showToast('Step 1: Capturing canvas...');
-    const canvas = await captureCanvas();
-    const blob   = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.88));
-
-    // 2. Build card canvas with message and upload
-    showToast('Step 2: Uploading to Cloudinary...');
+    const canvas    = await captureCanvas();
     const cardCanvas = buildCardCanvas(canvas, to, from, msg);
-    const cardBlob   = await new Promise(res => cardCanvas.toBlob(res, 'image/jpeg', 0.88));
-    let imgUrl;
-    try {
-      imgUrl = await uploadImage(cardBlob);
-    } catch(e) {
-      throw new Error('Cloudinary upload failed: ' + e.message);
+    const blob      = await new Promise(res => cardCanvas.toBlob(res, 'image/jpeg', 0.9));
+    const file      = new File([blob], 'sweet-treat.jpg', {type:'image/jpeg'});
+
+    // Try Web Share API with file (works on iOS Safari + Android Chrome)
+    if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
+      await navigator.share({files:[file], text: waText, title:'Sweet Treat'});
+      showToast('Shared!');
+      return;
     }
 
-    // 3. Build WhatsApp message with image URL
-    let waText = '';
-    if(to)  waText += 'Hey ' + to + '! ';
-    waText += 'A sweet treat just for you!\n\n';
-    if(from) waText += 'From: ' + from + '\n';
-    if(msg)  waText += '\u201C' + msg + '\u201D\n\n';
-    waText += imgUrl;
-
-    const waUrl = 'https://wa.me/?text=' + encodeURIComponent(waText);
-    // Use location.href on mobile to avoid popup blocker
-    if(/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)){
-      window.location.href = waUrl;
-    } else {
-      window.open(waUrl, '_blank');
-    }
+    // Fallback: upload to Cloudinary then open WhatsApp with URL
+    showToast('Uploading...');
+    const imgUrl = await uploadImage(blob);
+    const waUrl  = 'https://wa.me/?text=' + encodeURIComponent(waText + '\n' + imgUrl);
+    window.open(waUrl, '_blank');
     showToast('Opening WhatsApp...');
 
   } catch(e) {
-    console.error('shareWhatsApp error:', e);
-    showToast(e.message);
+    if(e.name === 'AbortError') return; // user cancelled share sheet
+    console.error(e);
+    // Last resort: open WhatsApp with just the text
+    const waUrl = 'https://wa.me/?text=' + encodeURIComponent(waText);
+    window.open(waUrl, '_blank');
+    showToast('Opened WhatsApp (attach image manually)');
   }
 }
 
