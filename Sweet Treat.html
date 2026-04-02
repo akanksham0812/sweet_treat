@@ -209,6 +209,7 @@ body{
 /* Placed flowers */
 .placed-flower{
   position:absolute;
+  touch-action:none;
   width:80px;height:80px;
   cursor:grab;
   user-select:none;
@@ -664,7 +665,7 @@ body{
   .main{overflow:hidden;}
   .canvas-wrap{overflow:hidden;}
   .canvas-area{touch-action:none;flex:1;}
-  .vase-el{width:180px;bottom:10px;}
+  .vase-el{width:280px;bottom:10px;}
   .canvas-drop-hint{padding-top:30px;justify-content:flex-start;}
 
   /* Mobile nav + sheets */
@@ -1485,7 +1486,7 @@ body{
     Cakes
   </button>
   <button class="mob-tab" id="mobTabProps" onclick="showMobTab('props')">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
     Edit
   </button>
   <button class="mob-tab" id="mobTabSend" onclick="openSendModal()">
