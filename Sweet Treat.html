@@ -659,11 +659,13 @@ body{
   .mobile-nav{display:flex;}
   .mobile-sheet{display:block;}
   .canvas-area{touch-action:none;}
+  .vase-el{width:200px;}
   .placed-flower .resize-handle{width:22px;height:22px;bottom:-11px;right:-11px;}
   .placed-flower .rotate-handle{width:22px;height:22px;top:-26px;}
   .placed-flower .flower-toolbar{top:-42px;}
   .ft-btn{width:30px;height:30px;}
   .toast{bottom:74px;}
+  .modal{width:95vw;max-height:90vh;overflow-y:auto;}
 }
 
 @media(min-width:769px) and (max-width:1100px){
@@ -1463,6 +1465,74 @@ body{
   </div>
 </div>
 
+<!-- MOBILE BOTTOM NAV -->
+<nav class="mobile-nav" id="mobileNav">
+  <button class="mob-tab active" id="mobTabCakes" onclick="showMobTab('cakes')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 11h18M3 11c0-4 4-7 9-7s9 3 9 7M3 11v2a9 9 0 0 0 18 0v-2"/><path d="M8 11v2M12 11v2M16 11v2"/></svg>
+    Cakes
+  </button>
+  <button class="mob-tab" id="mobTabProps" onclick="showMobTab('props')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+    Edit
+  </button>
+  <button class="mob-tab" id="mobTabSend" onclick="openSendModal()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 2 11 13M22 2 15 22l-4-9-9-4 20-7z"/></svg>
+    Share
+  </button>
+</nav>
+
+<!-- MOBILE CAKES SHEET -->
+<div class="mobile-sheet" id="mobileSheet">
+  <div class="sheet-handle"></div>
+  <div class="search-wrap" style="margin:0 12px 8px;">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <input type="text" placeholder="Search cakes…" oninput="filterFlowersMob(this.value)" />
+  </div>
+  <div class="cat-tabs" style="padding:0 12px 4px;">
+    <button class="cat-tab active" onclick="filterCatMob('all',this)">All</button>
+    <button class="cat-tab" onclick="filterCatMob('layer',this)">Layer</button>
+    <button class="cat-tab" onclick="filterCatMob('classic',this)">Classic</button>
+    <button class="cat-tab" onclick="filterCatMob('specialty',this)">Specialty</button>
+    <button class="cat-tab" onclick="filterCatMob('nobake',this)">No-Bake</button>
+  </div>
+  <div class="flower-grid" id="flowerGridMob" style="padding:8px 12px 20px;"></div>
+</div>
+
+<!-- MOBILE PROPS SHEET -->
+<div class="mobile-sheet" id="mobilePropsSheet">
+  <div class="sheet-handle"></div>
+  <div style="padding:0 16px 20px;">
+    <div id="mobPropsHint" style="text-align:center;color:var(--text-light);font-size:0.8rem;padding:20px 0;">Select a cake to edit</div>
+    <div id="mobPropsContent" style="display:none;">
+      <div class="prop-section">
+        <div class="prop-label">Size <span class="prop-val" id="mobSizeVal">80</span></div>
+        <input type="range" class="prop-slider" id="mobSizeSlider" min="30" max="220" value="80" oninput="updateSize(this.value);document.getElementById('sizeSlider').value=this.value;document.getElementById('mobSizeVal').textContent=this.value;" />
+      </div>
+      <div class="prop-section">
+        <div class="prop-label">Rotation <span class="prop-val" id="mobRotVal">0°</span></div>
+        <input type="range" class="prop-slider" id="mobRotSlider" min="-180" max="180" value="0" oninput="updateRot(this.value);document.getElementById('rotSlider').value=this.value;document.getElementById('mobRotVal').textContent=this.value+'°';" />
+      </div>
+      <div class="prop-section">
+        <div class="prop-label">Opacity <span class="prop-val" id="mobOpacVal">100%</span></div>
+        <input type="range" class="prop-slider" id="mobOpacSlider" min="10" max="100" value="100" oninput="updateOpac(this.value);document.getElementById('opacSlider').value=this.value;document.getElementById('mobOpacVal').textContent=this.value+'%';" />
+      </div>
+      <div class="prop-section">
+        <div class="prop-label">Flip</div>
+        <div class="flip-btns">
+          <button class="flip-btn active" onclick="setFlip('normal')">Normal</button>
+          <button class="flip-btn" onclick="setFlip('h')">↔ H</button>
+          <button class="flip-btn" onclick="setFlip('v')">↕ V</button>
+        </div>
+      </div>
+      <div class="prop-section" style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="layer-btn" onclick="bringForward()">▲ Front</button>
+        <button class="layer-btn" onclick="sendBack()">▼ Back</button>
+        <button class="delete-btn" onclick="deleteSelected()">🗑 Delete</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- DRAG GHOST -->
 <div class="drag-ghost" id="dragGhost">
   <img id="ghostImg" src="" alt="" />
@@ -1522,6 +1592,66 @@ body{
 <script>
 'use strict';
 
+// ── MOBILE NAV ──
+let activeMobSheet = null;
+function showMobTab(tab){
+  const cakesSheet = document.getElementById('mobileSheet');
+  const propsSheet = document.getElementById('mobilePropsSheet');
+  const allSheets  = [cakesSheet, propsSheet];
+  const tabCakes   = document.getElementById('mobTabCakes');
+  const tabProps   = document.getElementById('mobTabProps');
+
+  document.querySelectorAll('.mob-tab').forEach(t => t.classList.remove('active'));
+
+  if(tab === 'cakes'){
+    tabCakes.classList.add('active');
+    if(activeMobSheet === 'cakes'){ allSheets.forEach(s=>s.classList.remove('open')); activeMobSheet=null; return; }
+    allSheets.forEach(s=>s.classList.remove('open'));
+    cakesSheet.classList.add('open');
+    activeMobSheet = 'cakes';
+  } else if(tab === 'props'){
+    tabProps.classList.add('active');
+    if(activeMobSheet === 'props'){ allSheets.forEach(s=>s.classList.remove('open')); activeMobSheet=null; return; }
+    allSheets.forEach(s=>s.classList.remove('open'));
+    propsSheet.classList.add('open');
+    activeMobSheet = 'props';
+    syncMobProps();
+  }
+}
+
+function syncMobProps(){
+  const hasSelected = selectedId !== null;
+  document.getElementById('mobPropsHint').style.display    = hasSelected ? 'none'  : 'block';
+  document.getElementById('mobPropsContent').style.display = hasSelected ? 'block' : 'none';
+  if(hasSelected){
+    const f = placedFlowers.find(x=>x.id===selectedId);
+    if(f){
+      document.getElementById('mobSizeSlider').value = f.size;
+      document.getElementById('mobSizeVal').textContent = f.size;
+      document.getElementById('mobRotSlider').value = f.rot;
+      document.getElementById('mobRotVal').textContent = f.rot+'°';
+      document.getElementById('mobOpacSlider').value = Math.round(f.opacity*100);
+      document.getElementById('mobOpacVal').textContent = Math.round(f.opacity*100)+'%';
+    }
+  }
+}
+
+function filterFlowersMob(q){
+  const lower = q.toLowerCase();
+  const items = document.querySelectorAll('#flowerGridMob .flower-item');
+  items.forEach(el => {
+    el.style.display = el.dataset.name.toLowerCase().includes(lower) ? '' : 'none';
+  });
+}
+
+function filterCatMob(cat, btn){
+  document.querySelectorAll('#mobileSheet .cat-tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('#flowerGridMob .flower-item').forEach(el=>{
+    el.style.display = (cat==='all' || el.dataset.cat===cat) ? '' : 'none';
+  });
+}
+
 // ── CLOUDINARY CONFIG ──
 const CLOUDINARY_CLOUD_NAME   = 'dqwegfq1l';
 const CLOUDINARY_UPLOAD_PRESET = 'sweet_treat';
@@ -1567,21 +1697,36 @@ function showToast(msg){
 }
 
 // ── BUILD FLOWER GRID ──
+function makeFlowerItem(f, i, isMob){
+  const item = document.createElement('div');
+  item.className = 'flower-item';
+  item.dataset.id  = f.id;
+  item.dataset.name = f.name;
+  item.dataset.cat  = f.cat;
+  item.draggable = true;
+  item.style.animationDelay = (i * 25) + 'ms';
+  item.innerHTML = `
+    <img src="${imgSrc(f.id)}" alt="${f.name}" loading="lazy"/>
+    <div class="flower-item-name">${f.name}</div>`;
+  item.addEventListener('dragstart', e => startDrag(e, f.id));
+  item.addEventListener('click', () => {
+    addFlowerCenter(f.id);
+    if(isMob){
+      document.getElementById('mobileSheet').classList.remove('open');
+      activeMobSheet = null;
+    }
+  });
+  return item;
+}
+
 function buildGrid(flowers){
-  const grid = document.getElementById('flowerGrid');
+  const grid    = document.getElementById('flowerGrid');
+  const gridMob = document.getElementById('flowerGridMob');
   grid.innerHTML = '';
+  gridMob.innerHTML = '';
   flowers.forEach((f, i) => {
-    const item = document.createElement('div');
-    item.className = 'flower-item';
-    item.dataset.id = f.id;
-    item.draggable = true;
-    item.style.animationDelay = (i * 25) + 'ms';
-    item.innerHTML = `
-      <img src="${imgSrc(f.id)}" alt="${f.name}" loading="lazy"/>
-      <div class="flower-item-name">${f.name}</div>`;
-    item.addEventListener('dragstart', e => startDrag(e, f.id));
-    item.addEventListener('click', () => addFlowerCenter(f.id));
-    grid.appendChild(item);
+    grid.appendChild(makeFlowerItem(f, i, false));
+    gridMob.appendChild(makeFlowerItem(f, i, true));
   });
 }
 buildGrid(FLOWERS);
