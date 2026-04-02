@@ -51,6 +51,7 @@ body{
   color:var(--text);letter-spacing:-0.01em;
 }
 .topbar-actions{display:flex;gap:8px;}
+.mob-subtitle{display:none;font-size:0.72rem;color:var(--text-light);font-family:'Inter',sans-serif;font-weight:400;}
 .tb-btn{
   padding:5px 13px;border-radius:6px;border:1px solid var(--border);
   background:var(--btn-bg);color:var(--text-mid);
@@ -644,22 +645,29 @@ body{
   body{padding-bottom:60px;}
   .left-panel,.right-panel{display:none;}
   .canvas-toolbar{display:none;}
-  .topbar{padding:0 14px;height:48px;}
-  .app-name{font-size:1.1rem;}
-  .tb-btn:not(.primary){display:none;}
-  .tb-btn.primary{font-size:0.7rem;padding:5px 14px;}
-  .bg-bar{
-    padding:0 10px;gap:6px;height:56px;
-    overflow-x:auto;scrollbar-width:none;
+  .bg-bar{display:none;}
+
+  /* Topbar: stacked name + actions */
+  .topbar{
+    flex-direction:column;align-items:flex-start;justify-content:center;
+    height:auto;padding:14px 16px 10px;gap:10px;
+    background:var(--bg);border-bottom:none;
   }
-  .bg-bar::-webkit-scrollbar{display:none;}
-  .bg-bar-label{display:none;}
-  .bg-thumb{width:36px;height:36px;flex-shrink:0;}
-  .bg-add{width:36px;height:36px;flex-shrink:0;}
+  .topbar-left{flex-direction:column;align-items:flex-start;gap:2px;}
+  .app-name{font-size:1.7rem;font-weight:700;}
+  .mob-subtitle{display:block;}
+  .topbar-actions{width:100%;display:flex;gap:8px;}
+  .tb-btn{flex:1;justify-content:center;font-size:0.75rem;padding:8px 6px;}
+  .tb-btn.primary{flex:1.5;font-size:0.75rem;padding:8px 10px;border-radius:50px;}
+
+  /* Sheets */
   .mobile-nav{display:flex;}
-  .mobile-sheet{display:block;}
-  .canvas-area{touch-action:none;}
-  .vase-el{width:200px;}
+  .mobile-sheet{display:block;max-height:65vh;}
+  .canvas-area{touch-action:none;background:var(--bg);}
+  .vase-el{width:180px;bottom:10px;}
+  .canvas-drop-hint{padding-top:30px;}
+
+  /* Placed items */
   .placed-flower .resize-handle{width:22px;height:22px;bottom:-11px;right:-11px;}
   .placed-flower .rotate-handle{width:22px;height:22px;top:-26px;}
   .placed-flower .flower-toolbar{top:-42px;}
@@ -687,6 +695,7 @@ body{
 <div class="topbar">
   <div class="topbar-left">
     <div class="app-name">Sweet Treat</div>
+    <div class="mob-subtitle">Your cake arrangement studio</div>
   </div>
   <div class="topbar-actions">
     <button class="tb-btn" onclick="undoLast()">↩ Undo</button>
@@ -1731,6 +1740,12 @@ function buildGrid(flowers){
 }
 buildGrid(FLOWERS);
 
+// Auto-open cakes sheet on mobile
+if(window.innerWidth <= 768){
+  document.getElementById('mobileSheet').classList.add('open');
+  activeMobSheet = 'cakes';
+}
+
 function filterFlowers(){
   const q = document.getElementById('searchInput').value.toLowerCase();
   const filtered = FLOWERS.filter(f =>
@@ -1884,6 +1899,33 @@ function makeDraggable(el, state){
   document.addEventListener('mouseup', () => {
     if (dragging){ dragging = false; el.style.cursor = 'grab'; }
   });
+
+  // Touch drag
+  el.addEventListener('touchstart', e => {
+    if (e.target.classList.contains('resize-handle') ||
+        e.target.classList.contains('rotate-handle') ||
+        e.target.closest('.flower-toolbar')) return;
+    e.stopPropagation();
+    selectFlower(fid);
+    const t = e.touches[0];
+    dragging = true;
+    ox = t.clientX - state.x;
+    oy = t.clientY - state.y;
+  }, {passive:true});
+
+  el.addEventListener('touchmove', e => {
+    if (!dragging) return;
+    e.preventDefault();
+    const t = e.touches[0];
+    const canvas = document.getElementById('canvasArea');
+    const rect = canvas.getBoundingClientRect();
+    state.x = Math.max(-state.size + 10, Math.min(rect.width - 10, t.clientX - ox));
+    state.y = Math.max(-state.size + 10, Math.min(rect.height - 10, t.clientY - oy));
+    el.style.left = state.x + 'px';
+    el.style.top  = state.y + 'px';
+  }, {passive:false});
+
+  el.addEventListener('touchend', () => { dragging = false; });
 }
 
 // ── RESIZE ──
@@ -1911,6 +1953,24 @@ function makeResizable(el, state){
   });
 
   document.addEventListener('mouseup', () => { resizing = false; });
+
+  // Touch resize
+  handle.addEventListener('touchstart', e => {
+    e.stopPropagation(); e.preventDefault();
+    resizing = true;
+    startX = e.touches[0].clientX;
+    startSize = state.size;
+  }, {passive:false});
+
+  document.addEventListener('touchmove', e => {
+    if (!resizing) return;
+    const dx = e.touches[0].clientX - startX;
+    state.size = Math.max(30, Math.min(220, startSize + dx));
+    el.style.width = state.size + 'px';
+    el.style.height = state.size + 'px';
+  }, {passive:true});
+
+  document.addEventListener('touchend', () => { resizing = false; });
 }
 
 // ── ROTATE ──
@@ -1959,6 +2019,16 @@ function selectFlower(fid){
   document.getElementById('opacVal').textContent = Math.round(s.opac * 100) + '%';
   updateFlipBtns(s);
   updateLayerList();
+
+  // On mobile, auto-open the edit sheet
+  if(window.innerWidth <= 768){
+    const cakesSheet = document.getElementById('mobileSheet');
+    const propsSheet = document.getElementById('mobilePropsSheet');
+    cakesSheet.classList.remove('open');
+    propsSheet.classList.add('open');
+    activeMobSheet = 'props';
+    syncMobProps();
+  }
 }
 
 function deselectAll(e){
