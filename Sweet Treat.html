@@ -655,10 +655,7 @@ body{
   transition:transform 0.3s cubic-bezier(0.34,1.2,0.64,1);
 }
 .mobile-sheet.open{transform:translateY(0);}
-.sheet-handle{
-  width:36px;height:4px;border-radius:2px;
-  background:var(--border);margin:10px auto 8px;
-}
+.sheet-handle{display:none;}
 .mobile-sheet .flower-grid{
   grid-template-columns:repeat(4,1fr);
   padding:8px 12px 16px;
@@ -1532,7 +1529,7 @@ body{
     Edit
   </button>
   <button class="mob-tab" id="mobTabBg" onclick="showMobTab('bg')">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2a10 10 0 1 0 0 20"/><path d="M12 2c2.5 3 4 6.5 4 10s-1.5 7-4 10"/><path d="M2 12h20"/></svg>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 8h20M2 16h20M8 2v20M16 2v20"/></svg>
     Background
   </button>
   <button class="mob-tab" id="mobTabSend" onclick="openSendModal()">
